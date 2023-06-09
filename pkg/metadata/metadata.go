@@ -2,8 +2,9 @@ package metadata
 
 import (
 	"fmt"
-	"github.com/arttor/helmify/pkg/config"
 	"strings"
+
+	"github.com/arttor/helmify/pkg/config"
 
 	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/sirupsen/logrus"
@@ -12,6 +13,7 @@ import (
 )
 
 const nameTeml = `{{ include "%s.fullname" . }}-%s`
+const saNameTeml = `{{ include "%s.serviceAccountName" . }}`
 
 var nsGVK = schema.GroupVersionKind{
 	Group:   "",
@@ -25,14 +27,20 @@ var crdGVK = schema.GroupVersionKind{
 	Kind:    "CustomResourceDefinition",
 }
 
+var serviceAccountGVC = schema.GroupVersionKind{
+	Group:   "",
+	Version: "v1",
+	Kind:    "ServiceAccount",
+}
+
 func New(conf config.Config) *Service {
-	return &Service{names: make(map[string]struct{}), conf: conf}
+	return &Service{names: make(map[string]*unstructured.Unstructured), conf: conf}
 }
 
 type Service struct {
 	commonPrefix string
 	namespace    string
-	names        map[string]struct{}
+	names        map[string]*unstructured.Unstructured
 	conf         config.Config
 }
 
@@ -57,7 +65,7 @@ var _ helmify.AppMetadata = &Service{}
 // Load processed objects one-by-one before actual processing to define app namespace, name common prefix and
 // other app meta information.
 func (a *Service) Load(obj *unstructured.Unstructured) {
-	a.names[obj.GetName()] = struct{}{}
+	a.names[obj.GetName()] = obj
 	a.commonPrefix = detectCommonPrefix(obj, a.commonPrefix)
 	objNs := extractAppNamespace(obj)
 	if objNs == "" {
@@ -82,10 +90,14 @@ func (a *Service) ChartName() string {
 // TemplatedName - converts object name to its Helm templated representation.
 // Adds chart fullname prefix from _helpers.tpl
 func (a *Service) TemplatedName(name string) string {
-	_, contains := a.names[name]
+	obj, contains := a.names[name]
 	if !contains {
 		// template only app objects
 		return name
+	}
+	if obj.GroupVersionKind() == serviceAccountGVC {
+		name = a.TrimName(name)
+		return fmt.Sprintf(saNameTeml, a.conf.ChartName)
 	}
 	name = a.TrimName(name)
 	return fmt.Sprintf(nameTeml, a.conf.ChartName, name)

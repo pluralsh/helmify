@@ -31,21 +31,36 @@ func (sa serviceAccount) Process(appMeta helmify.AppMetadata, obj *unstructured.
 	if err != nil {
 		return true, nil, err
 	}
+	name := appMeta.TrimName(obj.GetName())
+
+	saVals := map[string]interface{}{
+		"create":      true,
+		"name":        "",
+		"labels":      map[string]interface{}{},
+		"annotations": map[string]interface{}{},
+	}
+
+	values := helmify.Values{}
+	_ = unstructured.SetNestedField(values, saVals, "serviceAccount")
 	return true, &saResult{
-		data: []byte(meta),
+		name:   name,
+		data:   []byte(meta),
+		values: values,
 	}, nil
 }
 
 type saResult struct {
-	data []byte
+	name   string
+	data   []byte
+	values helmify.Values
 }
 
 func (r *saResult) Filename() string {
-	return "deployment.yaml"
+	return r.name + "-sa.yaml"
 }
 
 func (r *saResult) Values() helmify.Values {
-	return helmify.Values{}
+	return r.values
 }
 
 func (r *saResult) Write(writer io.Writer) error {

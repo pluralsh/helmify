@@ -71,6 +71,26 @@ func ProcessSpec(objName string, appMeta helmify.AppMetadata, spec corev1.PodSpe
 		if err != nil {
 			return nil, nil, err
 		}
+	} else if appMeta.Config().GenerateDefaults {
+		err = unstructured.SetNestedField(specMap, fmt.Sprintf(`{{- toYaml .Values.%s.nodeSelector | nindent 8 }}`, objName), "nodeSelector")
+		if err != nil {
+			return nil, nil, err
+		}
+		err = unstructured.SetNestedStringMap(values, map[string]string{}, objName, "nodeSelector")
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// set labels and annotations
+	err = unstructured.SetNestedStringMap(values, map[string]string{}, objName, "labels")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = unstructured.SetNestedStringMap(values, map[string]string{}, objName, "annotations")
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return specMap, values, nil
