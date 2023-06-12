@@ -3,6 +3,7 @@ package yaml
 import (
 	"bytes"
 
+	yamlv2 "gopkg.in/yaml.v2"
 	"sigs.k8s.io/yaml"
 )
 
@@ -18,6 +19,7 @@ func Indent(content []byte, n int) []byte {
 
 // Marshal object to yaml string with indentation.
 func Marshal(object interface{}, indent int) (string, error) {
+	yamlv2.FutureLineWrap()
 	objectBytes, err := yaml.Marshal(object)
 	if err != nil {
 		return "", err
