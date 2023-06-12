@@ -189,7 +189,8 @@ func processPodSpec(name string, appMeta helmify.AppMetadata, pod *corev1.PodSpe
 			v.Secret.SecretName = appMeta.TemplatedName(v.Secret.SecretName)
 		}
 	}
-	pod.ServiceAccountName = appMeta.TemplatedName(pod.ServiceAccountName)
+	// pod.ServiceAccountName = appMeta.TemplatedName(pod.ServiceAccountName)
+	pod.ServiceAccountName = fmt.Sprintf(`{{ include "%s.serviceAccountName" . }}`, appMeta.ChartName())
 
 	for i, s := range pod.ImagePullSecrets {
 		pod.ImagePullSecrets[i].Name = appMeta.TemplatedName(s.Name)
