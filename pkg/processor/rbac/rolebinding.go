@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"fmt"
 	"io"
 	"strings"
 	"text/template"
@@ -58,7 +59,7 @@ func (r roleBinding) Process(appMeta helmify.AppMetadata, obj *unstructured.Unst
 
 	for i, s := range rb.Subjects {
 		s.Namespace = "{{ .Release.Namespace }}"
-		s.Name = appMeta.TemplatedName(s.Name)
+		s.Name = fmt.Sprintf(`{{ include "%s.serviceAccountName" . }}`, appMeta.ChartName()) // TODO: this is a crude hack to get the service account name to work
 		rb.Subjects[i] = s
 	}
 	subjects, err := yamlformat.Marshal(map[string]interface{}{"subjects": &rb.Subjects}, 0)
