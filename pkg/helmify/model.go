@@ -16,6 +16,22 @@ type Processor interface {
 	Process(appMeta AppMetadata, unstructured *unstructured.Unstructured) (bool, Template, error)
 }
 
+// PreProcessor - converts k8s object to helm template.
+// Implement this interface and register it to a context to support a new k8s resource conversion.
+type PreProcessor interface {
+	// Process - converts k8s object to Helm template.
+	// return false if not able to process given object type.
+	Process(unstructured *unstructured.Unstructured) (*unstructured.Unstructured, Values, error)
+}
+
+// Processor - converts k8s object to helm template.
+// Implement this interface and register it to a context to support a new k8s resource conversion.
+type PostProcessor interface {
+	// Process - converts k8s object to Helm template.
+	// return false if not able to process given object type.
+	Process(Template) (Template, error)
+}
+
 // Template - represents Helm template in 'templates' directory.
 type Template interface {
 	// Filename - returns template filename
@@ -28,7 +44,7 @@ type Template interface {
 
 // Output - converts Template into helm chart on disk.
 type Output interface {
-	Create(chartName, chartDir string, Crd bool, certManagerAsSubchart bool, templates []Template, filenames []string) error
+	Create(chartName, chartDir string, Crd bool, certManagerAsSubchart bool, preVals Values, templates []Template, filenames []string) error
 }
 
 // AppMetadata handle common information about K8s objects in the chart.

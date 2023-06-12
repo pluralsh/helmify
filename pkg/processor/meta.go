@@ -10,6 +10,7 @@ import (
 	"github.com/arttor/helmify/pkg/helmify"
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
+	"github.com/sirupsen/logrus"
 )
 
 const metaTeml = `apiVersion: %[1]s
@@ -28,23 +29,31 @@ metadata:
   labels:
 %[6]s
   {{- include "%[4]s.labels" . | nindent 4 }}
-  {{- toYaml .Values.%[5]s.labels | nindent 4 }}
+  {{- with .Values.%[5]s.labels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
   annotations:
 %[7]s
-  {{- toYaml .Values.%[5]s.annotations | nindent 4 }}`
+  {{- with .Values.%[5]s.annotations }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}`
 
-const metaAnnSaTeml = `{{- if .Values.%[5]s.create }}
+const metaAnnSaTeml = `{{- if .Values.%[4]s.create }}
 apiVersion: %[1]s
 kind: %[2]s
 metadata:
-  name: %[3]s
+  name: {{ include "%[3]s.serviceAccountName" . }}
   labels:
-%[6]s
-  {{- include "%[4]s.labels" . | nindent 4 }}
-  {{- toYaml .Values.%[5]s.labels | nindent 4 }}
+%[5]s
+  {{- include "%[3]s.labels" . | nindent 4 }}
+  {{- with .Values.%[4]s.labels }}
+  {{ toYaml . | nindent 4 }}
+  {{- end }}
   annotations:
-%[7]s
-  {{- toYaml .Values.%[5]s.annotations | nindent 4 }}
+%[6]s
+  {{- with .Values.%[4]s.annotations }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}`
 
 var serviceAccountGVC = schema.GroupVersionKind{
@@ -86,6 +95,7 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 		if len(a) > 0 {
 			annotations, err = yamlformat.Marshal(a, 4)
 			if err != nil {
+				logrus.Debug("Failed to marshal annotations: ", err)
 				return "", err
 			}
 		}
@@ -98,9 +108,9 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 	var metaStr string
 
 	if obj.GroupVersionKind() == serviceAccountGVC {
-		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(kind), labels, annotations)
+		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.ChartName(), strcase.ToLowerCamel(kind), labels, annotations)
 	} else if obj.GroupVersionKind() == deploymentGVC {
-		metaStr = fmt.Sprintf(metaAnnTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(name), labels, annotations)
+		metaStr = fmt.Sprintf(metaAnnTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations)
 	} else {
 		metaStr = fmt.Sprintf(metaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), labels, annotations)
 		if len(obj.GetAnnotations()) != 0 {

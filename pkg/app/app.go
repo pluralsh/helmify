@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
-	"github.com/arttor/helmify/pkg/file"
-	"github.com/arttor/helmify/pkg/processor/job"
-	"github.com/arttor/helmify/pkg/processor/statefulset"
 	"io"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/arttor/helmify/pkg/file"
+	"github.com/arttor/helmify/pkg/processor/job"
+	"github.com/arttor/helmify/pkg/processor/statefulset"
 
 	"github.com/sirupsen/logrus"
 
@@ -64,7 +65,7 @@ func Start(stdin io.Reader, config config.Config) error {
 		webhook.MutatingWebhook(),
 		job.NewCron(),
 		job.NewJob(),
-	).WithDefaultProcessor(processor.Default())
+	).WithDefaultProcessor(processor.Default()).WithPreProcessor(processor.New())
 	if len(config.Files) != 0 {
 		file.Walk(config.Files, config.FilesRecursively, func(filename string, fileReader io.Reader) {
 			objects := decoder.Decode(ctx.Done(), fileReader)

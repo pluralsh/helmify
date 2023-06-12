@@ -40,7 +40,7 @@ func New(conf config.Config) *Service {
 type Service struct {
 	commonPrefix string
 	namespace    string
-	names        map[string]*unstructured.Unstructured
+	names        map[string]*unstructured.Unstructured // TODO: undo this change since it doesn't work
 	conf         config.Config
 }
 
@@ -95,9 +95,11 @@ func (a *Service) TemplatedName(name string) string {
 		// template only app objects
 		return name
 	}
+	logrus.Debugf("Templating name: %s", name)
+	logrus.Debugf("Templating GVK: %s", obj.GroupVersionKind())
 	if obj.GroupVersionKind() == serviceAccountGVC {
 		name = a.TrimName(name)
-		return fmt.Sprintf(saNameTeml, a.conf.ChartName)
+		return fmt.Sprintf(saNameTeml, a.conf.ChartName) // TODO: undo this change
 	}
 	name = a.TrimName(name)
 	return fmt.Sprintf(nameTeml, a.conf.ChartName, name)

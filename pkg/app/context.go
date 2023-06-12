@@ -10,7 +10,9 @@ import (
 
 // appContext helm processing context. Stores processed objects.
 type appContext struct {
-	processors       []helmify.Processor
+	processors   []helmify.Processor
+	preProcessor helmify.PreProcessor
+	// postProcessor    helmify.PostProcessor
 	defaultProcessor helmify.Processor
 	output           helmify.Output
 	config           config.Config
@@ -34,6 +36,18 @@ func (c *appContext) WithProcessors(processors ...helmify.Processor) *appContext
 	return c
 }
 
+// WithPreProcessor  add the preprocessor to the context and returns it.
+func (c *appContext) WithPreProcessor(preProcessor helmify.PreProcessor) *appContext {
+	c.preProcessor = preProcessor
+	return c
+}
+
+// // WithPostProcessor  add the post processor to the context and returns it.
+// func (c *appContext) WithPostProcessor(postProcessor helmify.PostProcessor) *appContext {
+// 	c.postProcessor = postProcessor
+// 	return c
+// }
+
 // WithDefaultProcessor  add defaultProcessor for unknown resources to the context and returns it.
 func (c *appContext) WithDefaultProcessor(processor helmify.Processor) *appContext {
 	c.defaultProcessor = processor
@@ -56,7 +70,17 @@ func (c *appContext) CreateHelm(stop <-chan struct{}) error {
 	}).Info("creating a chart")
 	var templates []helmify.Template
 	var filenames []string
+	values := helmify.Values{}
 	for i, obj := range c.objects {
+		obj, preVals, err := c.preProcessor.Process(obj)
+		if err != nil {
+			return err
+		}
+		err = values.Merge(preVals)
+		if err != nil {
+			return err
+		}
+
 		template, err := c.process(obj)
 		if err != nil {
 			return err
@@ -75,7 +99,7 @@ func (c *appContext) CreateHelm(stop <-chan struct{}) error {
 		default:
 		}
 	}
-	return c.output.Create(c.config.ChartDir, c.config.ChartName, c.config.Crd, c.config.CertManagerAsSubchart, templates, filenames)
+	return c.output.Create(c.config.ChartDir, c.config.ChartName, c.config.Crd, c.config.CertManagerAsSubchart, values, templates, filenames)
 }
 
 func (c *appContext) process(obj *unstructured.Unstructured) (helmify.Template, error) {

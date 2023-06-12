@@ -131,21 +131,34 @@ func processContainers(objName string, values helmify.Values, containerType stri
 			}
 		}
 
-		args, exists, err := unstructured.NestedStringSlice(containers[i].(map[string]interface{}), "args")
-		if err != nil {
-			return nil, nil, err
-		}
-		if exists && len(args) > 0 {
-			err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%[1]s.%[2]s.args | nindent 8 }}`, objName, containerName), "args")
-			if err != nil {
-				return nil, nil, err
-			}
+		// args, exists, err := unstructured.NestedStringSlice(containers[i].(map[string]interface{}), "args")
+		// if err != nil {
+		// 	return nil, nil, err
+		// }
 
-			err = unstructured.SetNestedStringSlice(values, args, objName, containerName, "args")
-			if err != nil {
-				return nil, nil, fmt.Errorf("%w: unable to set deployment value field", err)
-			}
-		}
+		// if exists && len(args) > 0 {
+		// 	varMap, err := test([]byte(strings.Join(args, "")))
+		// 	if err != nil {
+		// 		return nil, nil, err
+		// 	}
+		// 	logrus.Debugf("varMap: %v", varMap)
+		// }
+
+		// args, exists, err := unstructured.NestedStringSlice(containers[i].(map[string]interface{}), "args")
+		// if err != nil {
+		// 	return nil, nil, err
+		// }
+		// if exists && len(args) > 0 {
+		// 	err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%[1]s.%[2]s.args | nindent 8 }}`, objName, containerName), "args")
+		// 	if err != nil {
+		// 		return nil, nil, err
+		// 	}
+
+		// 	err = unstructured.SetNestedStringSlice(values, args, objName, containerName, "args")
+		// 	if err != nil {
+		// 		return nil, nil, fmt.Errorf("%w: unable to set deployment value field", err)
+		// 	}
+		// }
 	}
 	return containers, values, nil
 }
