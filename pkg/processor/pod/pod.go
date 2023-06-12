@@ -39,12 +39,12 @@ func ProcessSpec(objName string, appMeta helmify.AppMetadata, spec corev1.PodSpe
 		return nil, nil, fmt.Errorf("%w: unable to convert podSpec to map", err)
 	}
 
-	specMap, values, err = processNestedContainers(specMap, objName, values, "containers")
+	specMap, values, err = processNestedContainers(appMeta, specMap, objName, values, "containers")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	specMap, values, err = processNestedContainers(specMap, objName, values, "initContainers")
+	specMap, values, err = processNestedContainers(appMeta, specMap, objName, values, "initContainers")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -96,14 +96,14 @@ func ProcessSpec(objName string, appMeta helmify.AppMetadata, spec corev1.PodSpe
 	return specMap, values, nil
 }
 
-func processNestedContainers(specMap map[string]interface{}, objName string, values map[string]interface{}, containerKey string) (map[string]interface{}, map[string]interface{}, error) {
+func processNestedContainers(appMeta helmify.AppMetadata, specMap map[string]interface{}, objName string, values map[string]interface{}, containerKey string) (map[string]interface{}, map[string]interface{}, error) {
 	containers, _, err := unstructured.NestedSlice(specMap, containerKey)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if len(containers) > 0 {
-		containers, values, err = processContainers(objName, values, containerKey, containers)
+		containers, values, err = processContainers(appMeta, objName, values, containerKey, containers)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -117,7 +117,7 @@ func processNestedContainers(specMap map[string]interface{}, objName string, val
 	return specMap, values, nil
 }
 
-func processContainers(objName string, values helmify.Values, containerType string, containers []interface{}) ([]interface{}, helmify.Values, error) {
+func processContainers(appMeta helmify.AppMetadata, objName string, values helmify.Values, containerType string, containers []interface{}) ([]interface{}, helmify.Values, error) {
 	for i := range containers {
 		containerName := strcase.ToLowerCamel((containers[i].(map[string]interface{})["name"]).(string))
 		res, exists, err := unstructured.NestedMap(values, objName, containerName, "resources")
@@ -125,6 +125,11 @@ func processContainers(objName string, values helmify.Values, containerType stri
 			return nil, nil, err
 		}
 		if exists && len(res) > 0 {
+			err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%s.%s.resources | nindent 10 }}`, objName, containerName), "resources")
+			if err != nil {
+				return nil, nil, err
+			}
+		} else if appMeta.Config().GenerateDefaults {
 			err = unstructured.SetNestedField(containers[i].(map[string]interface{}), fmt.Sprintf(`{{- toYaml .Values.%s.%s.resources | nindent 10 }}`, objName, containerName), "resources")
 			if err != nil {
 				return nil, nil, err
@@ -234,14 +239,28 @@ func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Cont
 		Name:  cluster.DomainEnv,
 		Value: fmt.Sprintf("{{ quote .Values.%s }}", cluster.DomainKey),
 	})
-	for k, v := range c.Resources.Requests {
-		err = unstructured.SetNestedField(*values, v.ToUnstructured(), name, containerName, "resources", "requests", k.String())
+	if c.Resources.Requests != nil {
+		for k, v := range c.Resources.Requests {
+			err = unstructured.SetNestedField(*values, v.ToUnstructured(), name, containerName, "resources", "requests", k.String())
+			if err != nil {
+				return c, fmt.Errorf("%w: unable to set container resources value", err)
+			}
+		}
+	} else if appMeta.Config().GenerateDefaults {
+		err = unstructured.SetNestedField(*values, map[string]interface{}{}, name, containerName, "resources", "requests")
 		if err != nil {
 			return c, fmt.Errorf("%w: unable to set container resources value", err)
 		}
 	}
-	for k, v := range c.Resources.Limits {
-		err = unstructured.SetNestedField(*values, v.ToUnstructured(), name, containerName, "resources", "limits", k.String())
+	if c.Resources.Limits != nil {
+		for k, v := range c.Resources.Limits {
+			err = unstructured.SetNestedField(*values, v.ToUnstructured(), name, containerName, "resources", "limits", k.String())
+			if err != nil {
+				return c, fmt.Errorf("%w: unable to set container resources value", err)
+			}
+		}
+	} else if appMeta.Config().GenerateDefaults {
+		err = unstructured.SetNestedField(*values, map[string]interface{}{}, name, containerName, "resources", "limits")
 		if err != nil {
 			return c, fmt.Errorf("%w: unable to set container resources value", err)
 		}
