@@ -120,13 +120,12 @@ func createValues(values helmify.Values, varMap map[string]*string) error {
 		var value interface{}
 
 		if v != nil {
-			bool, err := strconv.ParseBool(*v)
-			if err == nil {
-				value = bool
-			} else if intVal, err := strconv.Atoi(*v); err == nil {
-				value = intVal
+			if intVal, err := strconv.Atoi(*v); err == nil {
+				value = int64(intVal)
 			} else if floatVal, err := strconv.ParseFloat(*v, 64); err == nil {
 				value = floatVal
+			} else if bool, err := strconv.ParseBool(*v); err == nil {
+				value = bool
 			} else {
 				value = *v
 			}
