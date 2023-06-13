@@ -3,9 +3,10 @@ package crd
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -24,6 +25,7 @@ metadata:
   name: %[1]s
 %[3]s
   labels:
+    clusterctl.cluster.x-k8s.io: ""
 %[4]s
   {{- include "%[2]s.labels" . | nindent 4 }}
 spec:
