@@ -97,7 +97,7 @@ func (v *Values) AddSecret(toBase64 bool, name ...string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to set value: %v", nameStr)
 	}
-	res := fmt.Sprintf(`{{ required "%[1]s is required" .Values.%[1]s`, nameStr)
+	res := fmt.Sprintf(`{{ .Values.%[1]s`, nameStr)
 	if toBase64 {
 		res += " | b64enc"
 	}
