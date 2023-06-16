@@ -19,7 +19,8 @@ import (
 	yamlformat "github.com/arttor/helmify/pkg/yaml"
 )
 
-const crdTeml = `apiVersion: apiextensions.k8s.io/v1
+const crdTeml = `{{- if .Values.crds.create -}}
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   name: %[1]s
@@ -35,7 +36,8 @@ status:
     kind: ""
     plural: ""
   conditions: []
-  storedVersions: []`
+  storedVersions: []
+{{- end -}}`
 
 var crdGVC = schema.GroupVersionKind{
 	Group:   "apiextensions.k8s.io",
@@ -67,8 +69,9 @@ func (c crd) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstructured
 			return true, nil, errors.Wrap(err, "unable to create crd template")
 		}
 		return true, &result{
-			name: name + "-crd.yaml",
-			data: res,
+			name:   name + "-crd.yaml",
+			data:   res,
+			values: helmify.Values{},
 		}, nil
 	}
 
@@ -132,15 +135,23 @@ func (c crd) Process(appMeta helmify.AppMetadata, obj *unstructured.Unstructured
 	res := fmt.Sprintf(crdTeml, obj.GetName(), appMeta.ChartName(), annotations, labels, string(specYaml))
 	res = strings.ReplaceAll(res, "\n\n", "\n")
 
+	vals := helmify.Values{}
+	err = unstructured.SetNestedField(vals, true, "crds", "create")
+	if err != nil {
+		return true, nil, fmt.Errorf("%w: unable to crds create field", err)
+	}
+
 	return true, &result{
-		name: name + "-crd.yaml",
-		data: []byte(res),
+		name:   name + "-crd.yaml",
+		data:   []byte(res),
+		values: vals,
 	}, nil
 }
 
 type result struct {
-	name string
-	data []byte
+	name   string
+	data   []byte
+	values helmify.Values
 }
 
 func (r *result) Filename() string {
@@ -148,7 +159,7 @@ func (r *result) Filename() string {
 }
 
 func (r *result) Values() helmify.Values {
-	return helmify.Values{}
+	return r.values
 }
 
 func (r *result) Write(writer io.Writer) error {
