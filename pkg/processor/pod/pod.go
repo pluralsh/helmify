@@ -205,6 +205,9 @@ func processPodSpec(name string, appMeta helmify.AppMetadata, pod *corev1.PodSpe
 }
 
 func processPodContainer(name string, appMeta helmify.AppMetadata, c corev1.Container, values *helmify.Values) (corev1.Container, error) {
+	if strings.Contains(c.Image, "@sha256:") {
+		c.Image = strings.Split(c.Image, "@sha256:")[0]
+	}
 	index := strings.LastIndex(c.Image, ":")
 	if index < 0 {
 		return c, fmt.Errorf("wrong image format: %q", c.Image)
