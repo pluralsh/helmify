@@ -292,6 +292,9 @@ func processEnv(name string, appMeta helmify.AppMetadata, c corev1.Container, va
 				// nothing to change here, keep the original value
 			}
 			continue
+		} else if strings.Contains(c.Env[i].Value, "${") {
+			// nothing to change here, keep the original value since it will be processed later
+			continue
 		}
 
 		err := unstructured.SetNestedField(*values, c.Env[i].Value, name, containerName, "env", strcase.ToLowerCamel(strings.ToLower(c.Env[i].Name)))
