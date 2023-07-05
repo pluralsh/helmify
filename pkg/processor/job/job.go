@@ -2,12 +2,12 @@ package job
 
 import (
 	"fmt"
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
-	"github.com/arttor/helmify/pkg/processor/pod"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
+	"github.com/pluralsh/helmify/pkg/processor/pod"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	"io"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/iancoleman/strcase"
+	"github.com/pluralsh/helmify/pkg/helmify"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/serializer"

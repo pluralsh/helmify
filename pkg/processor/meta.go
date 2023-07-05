@@ -7,9 +7,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/iancoleman/strcase"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	"github.com/sirupsen/logrus"
 )
 

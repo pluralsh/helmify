@@ -4,7 +4,7 @@ package processor
 // 	"fmt"
 // 	"strings"
 
-// 	"github.com/arttor/helmify/pkg/helmify"
+// 	"github.com/pluralsh/helmify/pkg/helmify"
 // 	"github.com/iancoleman/strcase"
 // 	"github.com/sirupsen/logrus"
 // 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"

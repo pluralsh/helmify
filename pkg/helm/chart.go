@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/arttor/helmify/pkg/cluster"
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
 	"github.com/pkg/errors"
+	"github.com/pluralsh/helmify/pkg/cluster"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
 	"github.com/sirupsen/logrus"
 
 	"sigs.k8s.io/cluster-api/cmd/clusterctl/client/yamlprocessor"

@@ -1,4 +1,4 @@
-module github.com/arttor/helmify
+module github.com/pluralsh/helmify
 
 go 1.20
 
