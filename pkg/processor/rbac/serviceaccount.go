@@ -22,7 +22,7 @@ Create the name of the service account to use
 */}}
 {{- define "%[1]s.%[2]sServiceAccountName" -}}
 {{- if .Values.serviceAccounts.%[2]s.create }}
-{{- default (include "cluster-api-provider-azure.fullname" .) .Values.serviceAccounts.%[2]s.name }}
+{{- default (printf "%%s-%%s" (include "cluster-api-provider-azure.fullname" .) %[3]s | trunc 63 | trimSuffix "-") .Values.serviceAccounts.%[2]s.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccounts.%[2]s.name }}
 {{- end }}
@@ -46,7 +46,7 @@ func (sa serviceAccount) Process(appMeta helmify.AppMetadata, obj *unstructured.
 	}
 	name := appMeta.TrimName(obj.GetName())
 
-	helperTpl := fmt.Sprintf(SaHelperTeml, appMeta.ChartName(), strcase.ToLowerCamel(name))
+	helperTpl := fmt.Sprintf(SaHelperTeml, appMeta.ChartName(), strcase.ToLowerCamel(name), name)
 
 	saVals := map[string]interface{}{
 		"create":      true,
