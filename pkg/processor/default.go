@@ -71,3 +71,11 @@ func (r *defaultResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
 }
+
+func (r *defaultResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *defaultResult) HelpersWrite(writer io.Writer) error {
+	return nil
+}

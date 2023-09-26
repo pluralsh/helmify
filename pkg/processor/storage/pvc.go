@@ -1,18 +1,19 @@
 package storage
 
 import (
+	"io"
+	"strings"
+	"text/template"
+
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
 	"github.com/pluralsh/helmify/pkg/helmify"
 	"github.com/pluralsh/helmify/pkg/processor"
 	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
-	"io"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"strings"
-	"text/template"
 )
 
 var pvcTempl, _ = template.New("pvc").Parse(
@@ -126,4 +127,12 @@ func (r *result) Values() helmify.Values {
 
 func (r *result) Write(writer io.Writer) error {
 	return pvcTempl.Execute(writer, r.data)
+}
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
+	return nil
 }

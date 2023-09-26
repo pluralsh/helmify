@@ -1,7 +1,6 @@
 package rbac
 
 import (
-	"fmt"
 	"io"
 	"strings"
 	"text/template"
@@ -61,7 +60,7 @@ func (r clusterRoleBinding) Process(appMeta helmify.AppMetadata, obj *unstructur
 
 	for i, s := range rb.Subjects {
 		s.Namespace = "{{ .Release.Namespace }}"
-		s.Name = fmt.Sprintf(`{{ include "%s.serviceAccountName" . }}`, appMeta.ChartName()) // TODO: this is a crude hack to get the service account name to work
+		s.Name = appMeta.SATemplatedName(s.Name)
 		rb.Subjects[i] = s
 	}
 	subjects, err := yamlformat.Marshal(map[string]interface{}{"subjects": &rb.Subjects}, 0)
@@ -102,4 +101,12 @@ func (r *crbResult) Values() helmify.Values {
 
 func (r *crbResult) Write(writer io.Writer) error {
 	return clusterRoleBindingTempl.Execute(writer, r.data)
+}
+
+func (r *crbResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *crbResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }

@@ -1,10 +1,11 @@
 package secret
 
 import (
-	"github.com/pluralsh/helmify/pkg/format"
 	"io"
 	"strings"
 	"text/template"
+
+	"github.com/pluralsh/helmify/pkg/format"
 
 	"github.com/pluralsh/helmify/pkg/processor"
 
@@ -146,4 +147,12 @@ func (r *result) Values() helmify.Values {
 
 func (r *result) Write(writer io.Writer) error {
 	return secretTempl.Execute(writer, r.data)
+}
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
+	return nil
 }

@@ -117,3 +117,11 @@ func (r *certResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
 }
+
+func (r *certResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *certResult) HelpersWrite(writer io.Writer) error {
+	return nil
+}

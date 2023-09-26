@@ -47,6 +47,13 @@ func (o output) Create(chartDir, chartName string, crd bool, certManagerAsSubcha
 		file := files[filenames[i]]
 		file = append(file, template)
 		files[filenames[i]] = file
+
+		if template.HelpersFilename() != "" {
+			helperfile := files[template.HelpersFilename()]
+			helperfile = append(helperfile, template)
+			files[template.HelpersFilename()] = file
+		}
+
 		err = values.Merge(template.Values())
 		if err != nil {
 			return err
@@ -92,15 +99,20 @@ func overwriteTemplateFile(filename, chartDir string, crd bool, templates []helm
 		logrus.WithField("file", file).Debug("writing a template into")
 
 		buf := new(bytes.Buffer)
-		err = t.Write(buf)
+		if strings.Contains(filename, "tpl") {
+			err = t.HelpersWrite(buf)
+			_, err = f.Write(buf.Bytes())
+		} else {
+			err = t.Write(buf)
 
-		processed, err := yamlProcessor.Process(buf.Bytes(), processor.GetVarString)
-		if err != nil {
-			logrus.Debug("Error post processing object: ", err)
-			return err
+			processed, err := yamlProcessor.Process(buf.Bytes(), processor.GetVarString)
+			if err != nil {
+				logrus.Debug("Error post processing object: ", err)
+				return err
+			}
+
+			_, err = f.Write(processed)
 		}
-
-		_, err = f.Write(processed)
 		// err = t.Write(f)
 		if err != nil {
 			return errors.Wrap(err, "unable to write into "+file)

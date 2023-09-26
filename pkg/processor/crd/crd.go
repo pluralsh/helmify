@@ -166,3 +166,11 @@ func (r *result) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
 }
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
+	return nil
+}

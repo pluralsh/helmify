@@ -106,3 +106,11 @@ func (r *crResult) Values() helmify.Values {
 func (r *crResult) Write(writer io.Writer) error {
 	return roleTempl.Execute(writer, r.data)
 }
+
+func (r *crResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *crResult) HelpersWrite(writer io.Writer) error {
+	return nil
+}

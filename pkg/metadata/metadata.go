@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/iancoleman/strcase"
 	"github.com/pluralsh/helmify/pkg/config"
 
 	"github.com/pluralsh/helmify/pkg/helmify"
@@ -13,7 +14,7 @@ import (
 )
 
 const nameTeml = `{{ include "%s.fullname" . }}-%s`
-const saNameTeml = `{{ include "%s.serviceAccountName" . }}`
+const saNameTeml = `{{ include "%s.%sServiceAccountName" . }}`
 
 var nsGVK = schema.GroupVersionKind{
 	Group:   "",
@@ -90,19 +91,28 @@ func (a *Service) ChartName() string {
 // TemplatedName - converts object name to its Helm templated representation.
 // Adds chart fullname prefix from _helpers.tpl
 func (a *Service) TemplatedName(name string) string {
-	obj, contains := a.names[name]
+	_, contains := a.names[name]
 	if !contains {
 		// template only app objects
 		return name
 	}
 	logrus.Debugf("Templating name: %s", name)
-	logrus.Debugf("Templating GVK: %s", obj.GroupVersionKind())
-	if obj.GroupVersionKind() == serviceAccountGVC {
-		name = a.TrimName(name)
-		return fmt.Sprintf(saNameTeml, a.conf.ChartName) // TODO: undo this change
-	}
 	name = a.TrimName(name)
 	return fmt.Sprintf(nameTeml, a.conf.ChartName, name)
+}
+
+// SATemplatedName - converts service account name to its Helm templated representation.
+// Adds chart fullname prefix from _helpers.tpl
+func (a *Service) SATemplatedName(name string) string {
+	_, contains := a.names[name]
+	if !contains {
+		// template only app objects
+		return name
+	}
+	logrus.Debugf("Templating SA name: %s", name)
+
+	name = a.TrimName(name)
+	return fmt.Sprintf(saNameTeml, a.conf.ChartName, strcase.ToLowerCamel(name))
 }
 
 func (a *Service) TemplatedString(str string) string {

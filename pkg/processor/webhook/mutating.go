@@ -90,3 +90,11 @@ func (r *mwhResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
 }
+
+func (r *mwhResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *mwhResult) HelpersWrite(writer io.Writer) error {
+	return nil
+}

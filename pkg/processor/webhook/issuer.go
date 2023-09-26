@@ -86,3 +86,11 @@ func (r *issResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
 }
+
+func (r *issResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *issResult) HelpersWrite(writer io.Writer) error {
+	return nil
+}

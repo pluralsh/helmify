@@ -40,6 +40,10 @@ type Template interface {
 	Values() Values
 	// Write - writes helm template into given writer
 	Write(writer io.Writer) error
+	// HelpersFilename - returns the filename of the helpers file
+	HelpersFilename() string
+	// HelpersWrite - writes the helpers template into the given writer
+	HelpersWrite(writer io.Writer) error
 }
 
 // Output - converts Template into helm chart on disk.
@@ -58,6 +62,11 @@ type AppMetadata interface {
 	//				"my-app-secret"		-> "{{ include "chart.fullname" . }}-secret"
 	//				etc...
 	TemplatedName(objName string) string
+	// TemplatedName converts service account name to templated Helm name.
+	// Example: 	"my-app-backend"	-> "{{ include "chart.backendServiceAccountName" . }}"
+	//				"my-app-frontend"		-> "{{ include "chart.frontendServiceAccountName" . }}"
+	//				etc...
+	SATemplatedName(objName string) string
 	// TemplatedString converts a string to templated string with chart name.
 	TemplatedString(str string) string
 	// TrimName trims common prefix from object name if exists.

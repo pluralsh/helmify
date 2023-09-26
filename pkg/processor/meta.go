@@ -38,20 +38,20 @@ metadata:
   {{- toYaml . | nindent 4 }}
   {{- end }}`
 
-const metaAnnSaTeml = `{{- if .Values.%[4]s.create }}
+const metaAnnSaTeml = `{{- if .Values.serviceAccounts.%[4]s.create }}
 apiVersion: %[1]s
 kind: %[2]s
 metadata:
-  name: {{ include "%[3]s.serviceAccountName" . }}
+  name: %[3]s
   labels:
 %[5]s
-  {{- include "%[3]s.labels" . | nindent 4 }}
-  {{- with .Values.%[4]s.labels }}
+  {{- include "%[7]s.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccounts.%[4]s.labels }}
   {{ toYaml . | nindent 4 }}
   {{- end }}
   annotations:
 %[6]s
-  {{- with .Values.%[4]s.annotations }}
+  {{- with .Values.serviceAccounts.%[4]s.annotations }}
   {{- toYaml . | nindent 4 }}
   {{- end }}
 {{- end }}`
@@ -108,7 +108,7 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 	var metaStr string
 
 	if obj.GroupVersionKind() == serviceAccountGVC {
-		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.ChartName(), strcase.ToLowerCamel(kind), labels, annotations)
+		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.SATemplatedName(name), strcase.ToLowerCamel(name), labels, annotations, appMeta.ChartName())
 	} else if obj.GroupVersionKind() == deploymentGVC {
 		metaStr = fmt.Sprintf(metaAnnTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations)
 	} else {

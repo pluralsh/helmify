@@ -182,3 +182,11 @@ func (r *result) Values() helmify.Values {
 func (r *result) Write(writer io.Writer) error {
 	return deploymentTempl.Execute(writer, r.data)
 }
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
+	return nil
+}

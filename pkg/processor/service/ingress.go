@@ -1,16 +1,17 @@
 package service
 
 import (
+	"io"
+	"text/template"
+
 	"github.com/pkg/errors"
 	"github.com/pluralsh/helmify/pkg/helmify"
 	"github.com/pluralsh/helmify/pkg/processor"
 	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
-	"io"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"text/template"
 )
 
 var ingressTempl, _ = template.New("ingress").Parse(
@@ -93,4 +94,12 @@ func (r *ingressResult) Values() helmify.Values {
 
 func (r *ingressResult) Write(writer io.Writer) error {
 	return ingressTempl.Execute(writer, r.data)
+}
+
+func (r *ingressResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *ingressResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }
