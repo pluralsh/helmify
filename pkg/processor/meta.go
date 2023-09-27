@@ -108,7 +108,7 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 	var metaStr string
 
 	if obj.GroupVersionKind() == serviceAccountGVC {
-		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.SATemplatedName(name), strcase.ToLowerCamel(name), labels, annotations, appMeta.ChartName())
+		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.SATemplatedName(name), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations, appMeta.ChartName())
 	} else if obj.GroupVersionKind() == deploymentGVC {
 		metaStr = fmt.Sprintf(metaAnnTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations)
 	} else {
