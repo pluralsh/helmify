@@ -22,6 +22,25 @@ func (v *Values) Merge(values Values) error {
 	return nil
 }
 
+// Prefix given values with current instance.
+func (v *Values) Prefix(prefix string) (Values, error) {
+	outValues := Values{}
+	// err := unstructured.SetNestedField(outValues, v.Raw(), prefix)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "unable to set value prefix: %v", prefix)
+	// }
+	outValues[prefix] = v
+	return outValues, nil
+}
+
+func (v *Values) Raw() map[string]interface{} {
+	var raw map[string]interface{}
+	if err := mergo.Merge(&raw, v, mergo.WithAppendSlice); err != nil {
+		panic(err)
+	}
+	return raw
+}
+
 // Add - adds given value to values and returns its helm template representation {{ .Values.<valueName> }}
 func (v *Values) Add(value interface{}, name ...string) (string, error) {
 	name = toCamelCase(name)
@@ -78,7 +97,7 @@ func (v *Values) AddSecret(toBase64 bool, name ...string) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "unable to set value: %v", nameStr)
 	}
-	res := fmt.Sprintf(`{{ required "%[1]s is required" .Values.%[1]s`, nameStr)
+	res := fmt.Sprintf(`{{ .Values.%[1]s`, nameStr)
 	if toBase64 {
 		res += " | b64enc"
 	}

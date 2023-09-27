@@ -6,10 +6,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/arttor/helmify/pkg/processor"
+	"github.com/pluralsh/helmify/pkg/processor"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -105,4 +105,12 @@ func (r *crResult) Values() helmify.Values {
 
 func (r *crResult) Write(writer io.Writer) error {
 	return roleTempl.Execute(writer, r.data)
+}
+
+func (r *crResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *crResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }

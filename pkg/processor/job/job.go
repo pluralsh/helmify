@@ -2,19 +2,20 @@ package job
 
 import (
 	"fmt"
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
-	"github.com/arttor/helmify/pkg/processor/pod"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"io"
+	"strings"
+	"text/template"
+
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
-	"io"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
+	"github.com/pluralsh/helmify/pkg/processor/pod"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"strings"
-	"text/template"
 )
 
 var jobTempl, _ = template.New("job").Parse(
@@ -168,5 +169,13 @@ func templateSpecVal(val any, values *helmify.Values, specMap map[string]interfa
 	if err != nil {
 		return fmt.Errorf("%w: unable to template job %q", err, strings.Join(valName, "."))
 	}
+	return nil
+}
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
 	return nil
 }

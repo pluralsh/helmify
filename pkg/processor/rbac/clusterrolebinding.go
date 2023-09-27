@@ -5,11 +5,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/arttor/helmify/pkg/processor"
+	"github.com/pluralsh/helmify/pkg/processor"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
 	"github.com/pkg/errors"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -60,7 +60,7 @@ func (r clusterRoleBinding) Process(appMeta helmify.AppMetadata, obj *unstructur
 
 	for i, s := range rb.Subjects {
 		s.Namespace = "{{ .Release.Namespace }}"
-		s.Name = appMeta.TemplatedName(s.Name)
+		s.Name = appMeta.SATemplatedName(s.Name)
 		rb.Subjects[i] = s
 	}
 	subjects, err := yamlformat.Marshal(map[string]interface{}{"subjects": &rb.Subjects}, 0)
@@ -101,4 +101,12 @@ func (r *crbResult) Values() helmify.Values {
 
 func (r *crbResult) Write(writer io.Writer) error {
 	return clusterRoleBindingTempl.Execute(writer, r.data)
+}
+
+func (r *crbResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *crbResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }

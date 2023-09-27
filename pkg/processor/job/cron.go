@@ -2,19 +2,20 @@ package job
 
 import (
 	"fmt"
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
-	"github.com/arttor/helmify/pkg/processor/pod"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"io"
+	"strings"
+	"text/template"
+
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
-	"io"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
+	"github.com/pluralsh/helmify/pkg/processor/pod"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"strings"
-	"text/template"
 )
 
 var cronTempl, _ = template.New("cron").Parse(
@@ -155,4 +156,12 @@ func (r *resultCron) Values() helmify.Values {
 
 func (r *resultCron) Write(writer io.Writer) error {
 	return cronTempl.Execute(writer, r.data)
+}
+
+func (r *resultCron) HelpersFilename() string {
+	return ""
+}
+
+func (r *resultCron) HelpersWrite(writer io.Writer) error {
+	return nil
 }

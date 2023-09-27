@@ -3,8 +3,8 @@ package processor
 import (
 	"io"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -70,4 +70,12 @@ func (r *defaultResult) Values() helmify.Values {
 func (r *defaultResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
+}
+
+func (r *defaultResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *defaultResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }

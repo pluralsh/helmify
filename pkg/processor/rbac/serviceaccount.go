@@ -1,10 +1,12 @@
 package rbac
 
 import (
+	"fmt"
 	"io"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
+	"github.com/iancoleman/strcase"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -14,6 +16,17 @@ var serviceAccountGVC = schema.GroupVersionKind{
 	Version: "v1",
 	Kind:    "ServiceAccount",
 }
+
+const SaHelperTeml = `{{/*
+Create the name of the service account to use
+*/}}
+{{- define "%[1]s.%[2]sServiceAccountName" -}}
+{{- if .Values.serviceAccounts.%[2]s.create }}
+{{- default (printf "%%s-%%s" (include "%[1]s.fullname" .) "%[3]s" | trunc 63 | trimSuffix "-") .Values.serviceAccounts.%[2]s.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccounts.%[2]s.name }}
+{{- end }}
+{{- end }}`
 
 // ServiceAccount creates processor for k8s ServiceAccount resource.
 func ServiceAccount() helmify.Processor {
@@ -31,24 +44,52 @@ func (sa serviceAccount) Process(appMeta helmify.AppMetadata, obj *unstructured.
 	if err != nil {
 		return true, nil, err
 	}
+	name := appMeta.TrimName(obj.GetName())
+
+	helperTpl := fmt.Sprintf(SaHelperTeml, appMeta.ChartName(), strcase.ToLowerCamel(name), name)
+
+	saVals := map[string]interface{}{
+		"create":      true,
+		"name":        "",
+		"labels":      map[string]interface{}{},
+		"annotations": map[string]interface{}{},
+	}
+
+	values := helmify.Values{}
+	_ = unstructured.SetNestedField(values, saVals, "serviceAccounts", strcase.ToLowerCamel(name))
 	return true, &saResult{
-		data: []byte(meta),
+		name:    name,
+		data:    []byte(meta),
+		values:  values,
+		helpers: []byte(helperTpl),
 	}, nil
 }
 
 type saResult struct {
-	data []byte
+	name    string
+	data    []byte
+	values  helmify.Values
+	helpers []byte
 }
 
 func (r *saResult) Filename() string {
-	return "deployment.yaml"
+	return r.name + "-sa.yaml"
 }
 
 func (r *saResult) Values() helmify.Values {
-	return helmify.Values{}
+	return r.values
 }
 
 func (r *saResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
+	return err
+}
+
+func (r *saResult) HelpersFilename() string {
+	return "_" + r.name + "-helpers.tpl"
+}
+
+func (r *saResult) HelpersWrite(writer io.Writer) error {
+	_, err := writer.Write(r.helpers)
 	return err
 }

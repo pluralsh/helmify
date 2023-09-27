@@ -1,16 +1,17 @@
 package statefulset
 
 import (
-	"github.com/arttor/helmify/pkg/processor/pod"
 	"io"
 	"strings"
 	"text/template"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	"github.com/arttor/helmify/pkg/processor"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/pluralsh/helmify/pkg/processor/pod"
+
 	"github.com/iancoleman/strcase"
 	"github.com/pkg/errors"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	"github.com/pluralsh/helmify/pkg/processor"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -157,4 +158,12 @@ func (r *result) Values() helmify.Values {
 
 func (r *result) Write(writer io.Writer) error {
 	return statefulsetTempl.Execute(writer, r.data)
+}
+
+func (r *result) HelpersFilename() string {
+	return ""
+}
+
+func (r *result) HelpersWrite(writer io.Writer) error {
+	return nil
 }

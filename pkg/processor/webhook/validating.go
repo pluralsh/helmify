@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/arttor/helmify/pkg/helmify"
 	"github.com/pkg/errors"
+	"github.com/pluralsh/helmify/pkg/helmify"
 	v1 "k8s.io/api/admissionregistration/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,4 +89,12 @@ func (r *vwhResult) Values() helmify.Values {
 func (r *vwhResult) Write(writer io.Writer) error {
 	_, err := writer.Write(r.data)
 	return err
+}
+
+func (r *vwhResult) HelpersFilename() string {
+	return ""
+}
+
+func (r *vwhResult) HelpersWrite(writer io.Writer) error {
+	return nil
 }

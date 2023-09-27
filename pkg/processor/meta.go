@@ -5,9 +5,12 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/arttor/helmify/pkg/helmify"
-	yamlformat "github.com/arttor/helmify/pkg/yaml"
+	"github.com/iancoleman/strcase"
+	"github.com/pluralsh/helmify/pkg/helmify"
+	yamlformat "github.com/pluralsh/helmify/pkg/yaml"
+	"github.com/sirupsen/logrus"
 )
 
 const metaTeml = `apiVersion: %[1]s
@@ -18,6 +21,52 @@ metadata:
 %[5]s
   {{- include "%[4]s.labels" . | nindent 4 }}
 %[6]s`
+
+const metaAnnTeml = `apiVersion: %[1]s
+kind: %[2]s
+metadata:
+  name: %[3]s
+  labels:
+%[6]s
+  {{- include "%[4]s.labels" . | nindent 4 }}
+  {{- with .Values.%[5]s.labels }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+  annotations:
+%[7]s
+  {{- with .Values.%[5]s.annotations }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}`
+
+const metaAnnSaTeml = `{{- if .Values.serviceAccounts.%[4]s.create }}
+apiVersion: %[1]s
+kind: %[2]s
+metadata:
+  name: %[3]s
+  labels:
+%[5]s
+  {{- include "%[7]s.labels" . | nindent 4 }}
+  {{- with .Values.serviceAccounts.%[4]s.labels }}
+  {{ toYaml . | nindent 4 }}
+  {{- end }}
+  annotations:
+%[6]s
+  {{- with .Values.serviceAccounts.%[4]s.annotations }}
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}`
+
+var serviceAccountGVC = schema.GroupVersionKind{
+	Group:   "",
+	Version: "v1",
+	Kind:    "ServiceAccount",
+}
+
+var deploymentGVC = schema.GroupVersionKind{
+	Group:   "apps",
+	Version: "v1",
+	Kind:    "Deployment",
+}
 
 // ProcessObjMeta - returns object apiVersion, kind and metadata as helm template.
 func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured) (string, error) {
@@ -41,14 +90,37 @@ func ProcessObjMeta(appMeta helmify.AppMetadata, obj *unstructured.Unstructured)
 		}
 	}
 	if len(obj.GetAnnotations()) != 0 {
-		annotations, err = yamlformat.Marshal(map[string]interface{}{"annotations": obj.GetAnnotations()}, 2)
-		if err != nil {
-			return "", err
+		a := obj.GetAnnotations()
+		// Since we delete labels above, it is possible that at this point there are no more labels.
+		if len(a) > 0 {
+			annotations, err = yamlformat.Marshal(a, 4)
+			if err != nil {
+				logrus.Debug("Failed to marshal annotations: ", err)
+				return "", err
+			}
 		}
 	}
-	templatedName := appMeta.TemplatedName(obj.GetName())
+
+	name := obj.GetName()
+	templatedName := appMeta.TemplatedName(name)
 	apiVersion, kind := obj.GetObjectKind().GroupVersionKind().ToAPIVersionAndKind()
-	metaStr := fmt.Sprintf(metaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), labels, annotations)
+
+	var metaStr string
+
+	if obj.GroupVersionKind() == serviceAccountGVC {
+		metaStr = fmt.Sprintf(metaAnnSaTeml, apiVersion, kind, appMeta.SATemplatedName(name), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations, appMeta.ChartName())
+	} else if obj.GroupVersionKind() == deploymentGVC {
+		metaStr = fmt.Sprintf(metaAnnTeml, apiVersion, kind, templatedName, appMeta.ChartName(), strcase.ToLowerCamel(appMeta.TrimName(name)), labels, annotations)
+	} else {
+		metaStr = fmt.Sprintf(metaTeml, apiVersion, kind, templatedName, appMeta.ChartName(), labels, annotations)
+		if len(obj.GetAnnotations()) != 0 {
+			annotations, err = yamlformat.Marshal(map[string]interface{}{"annotations": obj.GetAnnotations()}, 2)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
 	metaStr = strings.Trim(metaStr, " \n")
 	metaStr = strings.ReplaceAll(metaStr, "\n\n", "\n")
 	return metaStr, nil
